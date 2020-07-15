@@ -12,6 +12,8 @@ import org.junit.runner.notification.Failure;
 public class JUnit4Decorator extends TestDecorator {
   public static final JUnit4Decorator DECORATE = new JUnit4Decorator();
 
+  private static final String JUNIT4 = "junit4";
+
   @Override
   protected String[] instrumentationNames() {
     return new String[] {"junit", "junit-4"};
@@ -19,7 +21,7 @@ public class JUnit4Decorator extends TestDecorator {
 
   @Override
   protected String spanType() {
-    return DDSpanTypes.JUNIT;
+    return DDSpanTypes.TEST;
   }
 
   @Override
@@ -28,8 +30,14 @@ public class JUnit4Decorator extends TestDecorator {
   }
 
   public void onTestStart(final AgentSpan span, final Description description) {
-    span.setTag(DDTags.TEST_SUITE, description.getClassName());
-    span.setTag(DDTags.TEST_NAME, description.getMethodName());
+    final String testSuite = description.getClassName();
+    final String testName = description.getMethodName();
+
+    span.setTag(DDTags.RESOURCE_NAME, testSuite + "." + testName);
+
+    span.setTag(DDTags.TEST_SUITE, testSuite);
+    span.setTag(DDTags.TEST_NAME, testName);
+    span.setTag(DDTags.TEST_FRAMEWORK, JUNIT4);
     span.setTag(DDTags.TEST_STATUS, TEST_PASS);
   }
 
@@ -45,8 +53,7 @@ public class JUnit4Decorator extends TestDecorator {
   }
 
   public void onTestIgnored(final AgentSpan span, final Description description) {
-    span.setTag(DDTags.TEST_SUITE, description.getClassName());
-    span.setTag(DDTags.TEST_NAME, description.getMethodName());
+    onTestStart(span, description);
     span.setTag(DDTags.TEST_STATUS, TEST_SKIP);
   }
 }
